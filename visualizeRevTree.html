@@ -31,11 +31,15 @@
         $('form').onsubmit = function(e){
           e.preventDefault();
           submitButton.value = "working"; submitButton.disabled = true;
-          var url = urlInput.value.replace(/^\s+|\s+$/g, '').replace(/^https?:\/\//, '');
+          if (!urlInput.value || !docIdInput.value) return alert('Fill in the forms, please!');
+          var url = urlInput.value.replace(/^\s+|\s+$/g, '')
           var docId = docIdInput.value;
           var corsProxy = 'http://cors.io/';
-          var name = corsProxy + url;
-
+          if($('cors').checked){
+            name = corsProxy + url.replace(/^https?:\/\//, '');
+          }else{
+            name = url;
+          }
           console.log(name, docId);
           Pouch(name, function(err, db){
             if(err){
@@ -65,6 +69,7 @@
       <ul>
         <li><label for="url">Database URL:</label><input type="text" id="url" name="url" placeholder="http://me.iriscouch/db/foo"/></li>
         <li><label for="docId">Document id:</label><input type="text" id="docId" name="docId" placeholder="foo" /></li>
+        <li><label for="cors">Use CORS proxy:</label><input type="checkbox" id="cors" name="cors" checked /></li>
         <li><input type="submit" id="submit" value="visualize" /></li>
       </ul>
     </form></p>
