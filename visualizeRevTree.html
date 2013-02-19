@@ -46,7 +46,8 @@
                 return error(err);
               }
               status.innerHTML = "OK";
-              svg.style.height = '700px';
+              svg.style.width = svg.getAttribute('viewBox').split(' ')[2] * 7 + 'px';
+              svg.style.height = svg.getAttribute('viewBox').split(' ')[3] * 7 + 'px';
               svg.style.border = '2px solid';
               document.body.appendChild(svg);
               done();
