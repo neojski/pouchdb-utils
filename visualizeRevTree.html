@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+  <head>
+    <style type="text/css">
+      body{background: #F2F2F2; color: #333; font-family: "Helvetica", Arial,sans-serif;}
+      label, input {font-size: 1.5em;}
+    </style>
+    <script src="http://download.pouchdb.com/pouchdb-nightly.min.js"></script>
+    <script src="https://raw.github.com/daleharvey/pouchdb/master/src/plugins/pouchdb.visualizeRevTree.js"></script>
+    <link href="https://raw.github.com/daleharvey/trakkr/gh-pages/style/trakkr.css" rel="stylesheet" type="text/css" />
+    <script>
+      onload = function(){
+        var $ = function(id){return document.getElementById(id);};
+        var urlInput = $('url');
+        var docIdInput = $('docId');
+        var submitButton = $('submit');
+        var origVal = submitButton.value;
+        var status = $('status');
+
+        var done = function(){
+          submitButton.value = origVal;
+          submitButton.disabled = false;
+        }
+
+        var error = function(err){
+          status.innerHTML = "Can't visualize document due to error (error: " + err.error + "; reason: " + err.reason + ")";
+          done();
+          return;
+        }
+
+        $('form').onsubmit = function(e){
+          e.preventDefault();
+          submitButton.value = "working"; submitButton.disabled = true;
+          var url = urlInput.value.replace(/^\s+|\s+$/g, '').replace(/^https?:\/\//, '');
+          var docId = docIdInput.value;
+          var corsProxy = 'http://cors.io/';
+          var name = corsProxy + url;
+
+          console.log(name, docId);
+          Pouch(name, function(err, db){
+            if(err){
+              return error(err);
+            }
+            db.visualizeRevTree(docId, function(err, svg){
+              if(err){
+                return error(err);
+              }
+              status.innerHTML = "OK";
+              svg.style.height = '700px';
+              svg.style.border = '2px solid';
+              document.body.appendChild(svg);
+              done();
+            });
+          });
+          return false;
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <section>
+    <h1>Revision tree visualizer</h1>
+    <p><form id="form">
+      <ul>
+        <li><label for="url">Database URL:</label><input type="text" id="url" name="url" placeholder="http://me.iriscouch/db/foo"/></li>
+        <li><label for="docId">Document id:</label><input type="text" id="docId" name="docId" placeholder="foo" /></li>
+        <li><input type="submit" id="submit" value="visualize" /></li>
+      </ul>
+    </form></p>
+    <p id="status"></p>
+    </section>
+  </body>
+</html>
