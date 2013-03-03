@@ -45,15 +45,16 @@
             if(err){
               return error(err);
             }
-            db.visualizeRevTree(docId, function(err, svg){
+            db.visualizeRevTree(docId, function(err, box){
               if(err){
                 return error(err);
               }
               status.innerHTML = "OK";
+              var svg = box.getElementsByTagName('svg')[0];
               svg.style.width = svg.getAttribute('viewBox').split(' ')[2] * 7 + 'px';
               svg.style.height = svg.getAttribute('viewBox').split(' ')[3] * 7 + 'px';
               svg.style.border = '2px solid';
-              document.body.appendChild(svg);
+              document.body.appendChild(box);
               done();
             });
           });
