@@ -1,0 +1,111 @@
+<!doctype html>
+<html>
+  <script src="../dist/pouchdb-nightly.js"></script>
+  <script src="../src/plugins/pouchdb.visualizeRevTree.js"></script>
+  <script>
+    var local1name = 'idb://db1';
+    var http1name = 'http://127.0.0.1:2020/db1';
+    var http2name = 'http://127.0.0.1:2020/db2';
+
+    var local1, http1, http2;
+    var db;
+
+    Pouch(local1name, function(err, _db){
+      local1 = _db;
+      db = _db;
+      Pouch(http1name, function(err, _db){
+        http1 = _db;
+        db = _db;
+        Pouch(http2name, function(err, _db){
+          http2 = _db;
+
+          visualize();
+        });
+      });
+    });
+
+    function exportRevTree(){
+      http1.get('foo', {revs: true, open_revs:"all"}, function(err, results){
+        var docs = [];
+        results.forEach(function(row){
+          docs.push(row.ok);
+          console.log(row.ok);
+
+          /*local1.put(row.ok, {new_edits: false}, function(err, ok){
+            console.log(err, ok);
+          });*/
+
+          /*local1.bulkDocs({docs: [row.ok]}, {new_edits: false}, function(err, ok){
+            console.log(err, ok);
+          });*/
+        });
+
+        console.log(JSON.stringify(docs));
+
+        local1.bulkDocs({docs: docs}, {new_edits: false}, log);
+      });
+    }
+
+    function rep(){
+      db.replicate.to(name2, function(err, result){
+        db.replicate.from(name2, function(err, result){
+          console.log('replicate there and back');
+        });
+      });
+    }
+
+    function getAll(){
+      db.allDocs({include_docs: true}, function(err, results){
+      });
+    }
+
+
+    function get(){
+      db.get('foo', {rev_tree: true}, function(err, results){
+        console.log(results);
+      });
+    }
+
+    function visualize(){
+      db.visualizeRevTree('foo', function(err, svg){
+        svg.style.height = '700px';
+        svg.style.border = '2px solid';
+        document.body.appendChild(svg);
+      });
+    }
+
+    function init(){
+      cdb = db;
+      db.put({_id: "foo", "foo": 1}, function(){});
+    }
+
+    function put(val){
+      db.get("foo", function(err, doc){
+        doc.foo = val;
+        db.put(doc, function(err, res){
+          console.log(res);
+        });
+      });
+    }
+
+    function putAfter(doc, prevRev){
+      var newDoc = JSON.parse(JSON.stringify(doc));
+      newDoc._revisions = {
+        start: +newDoc._rev.split('-')[0],
+        ids: [
+        newDoc._rev.split('-')[1],
+        prevRev.split('-')[1]
+        ]
+      };
+      db.put(newDoc, {new_edits: false}, log);
+    }
+
+    function log(err, ok){
+      console.log(err, ok);
+    }
+
+    function des(){
+      Pouch.destroy(local1name);
+    }
+  </script>
+</html>
