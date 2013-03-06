@@ -20,16 +20,15 @@
         var done = function(){
           submitButton.value = origVal;
           submitButton.disabled = false;
-        }
+        };
 
         var error = function(err){
           status.innerHTML = "Can't visualize document due to error (error: " + err.error + "; reason: " + err.reason + ")";
           done();
           return;
-        }
+        };
 
-        $('form').onsubmit = function(e){
-          e.preventDefault();
+        var initDB = function(callback){
           if (!urlInput.value || !docIdInput.value) return alert('Fill in the forms, please!');
           submitButton.value = "working"; submitButton.disabled = true;
           var url = urlInput.value.replace(/^\s+|\s+$/g, '')
@@ -42,6 +41,12 @@
           }
           console.log(name, docId);
           Pouch(name, function(err, db){
+            callback(err, db, docId);
+          });
+        };
+
+        $('form').onsubmit = function(){
+          initDB(function(err, db, docId){
             if(err){
               return error(err);
             }
@@ -59,19 +64,34 @@
             });
           });
           return false;
-        }
+        };
+
+        $('export').onclick = function(){
+          initDB(function(err, db, docId){
+            db.get(docId, {revs: true, open_revs: "all"}, function(err, results){
+              var docs = [];
+              results.forEach(function(row){
+                docs.push(row.ok);
+              });
+              console.log("Exported docs: ", JSON.stringify(docs));
+              console.log("Pouchdb format: ", "db.bulkDocs({docs:"+JSON.stringify(docs)+"}, {new_edits:false}, function(err, res){})");
+            });
+          });
+        };
       }
     </script>
   </head>
   <body>
     <section>
     <h1>Revision tree visualizer</h1>
+    <p>You can you this small tool to create any tree you want and then export it to JSON. With that you can easily create Pouchdb tests as the returned format is compatible with couchdb (pouchdb) bulkDocs. Don't forget new_edits=false!</p>
     <p><form id="form">
       <ul>
         <li><label for="url">Database URL:</label><input type="text" id="url" name="url" placeholder="http://me.iriscouch/db/foo"/></li>
         <li><label for="docId">Document id:</label><input type="text" id="docId" name="docId" placeholder="foo" /></li>
         <li><label for="cors">Use CORS proxy:</label><input type="checkbox" id="cors" name="cors" checked /></li>
         <li><input type="submit" id="submit" value="visualize" /></li>
+        <li><input type="button" id="export" value="export" /> (see console for output!)</li>
       </ul>
     </form></p>
     <p id="status"></p>
