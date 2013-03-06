@@ -1,91 +1,86 @@
 <!doctype html>
 <html>
-<script src="../dist/pouchdb-nightly.js"></script>
-<script src="../src/plugins/pouchdb.visualizeRevTree.js"></script>
-<script>
-var name1 = 'idb://db1';
-name1 = 'http://127.0.0.1:2020/db';
-var name2 = 'http://127.0.0.1:2020/db1';
-var db;
+  <script src="../dist/pouchdb-nightly.js"></script>
+  <script src="../src/plugins/pouchdb.visualizeRevTree.js"></script>
+  <script>
+    var local1name = 'db1';
+    var http1name = 'http://127.0.0.1:2020/db1';
+    var http2name = 'http://127.0.0.1:2020/db2';
 
-Pouch(name1, function(err, _db){
-  db = _db;
-  visualize();
-});
+    var local1, http1, http2;
+    var db;
 
-function rep(){
-  Pouch(name1, function(err, db){
-    db.replicate.to(name2, function(err, result){
-      db.replicate.from(name2, function(err, result){
-        console.log('replicate there and back');
+    Pouch(local1name, function(err, _db){
+      local1 = _db;
+      db = _db;
+      Pouch(http1name, function(err, _db){
+        http1 = _db;
+        Pouch(http2name, function(err, _db){
+          http2 = _db;
+          visualize();
+        });
       });
     });
-  });
-}
 
-function getAll(){
-  Pouch(name1, function(err, db){
-    db.allDocs({include_docs: true}, function(err, results){
-      console.log(results);
-    });
-  });
-}
-
-
-function get(){
-  Pouch(name1, function(err, db){
-    db.get('foo', {rev_tree: true}, function(err, results){
-      console.log(results);
-    });
-  });
-}
-
-function visualize(){
-  Pouch(name1, function(err, db){
-    db.visualizeRevTree('foo', function(err, svg){
-      svg.style.height = '700px';
-      svg.style.border = '2px solid';
-      document.body.appendChild(svg);
-    });
-  });
-}
-
-function init(){
-  Pouch(name1, function(err, db){
-    cdb = db;
-    db.put({_id: "foo", "foo": 1}, function(){});
-  });
-}
-
-function des(){
-  Pouch.destroy(name1);
-}
-
-function put(val){
-  Pouch(name1, function(err, db){
-    db.get("foo", function(err, doc){
-      doc.foo = val;
-      db.put(doc, function(err, res){
-        console.log(res);
+    function rep(){
+      db.replicate.to(name2, function(err, result){
+        db.replicate.from(name2, function(err, result){
+          console.log('replicate there and back');
+        });
       });
-    });
-  });
-}
+    }
 
-function putAfter(doc, prevRev){
-  var newDoc = JSON.parse(JSON.stringify(doc));
-  newDoc._revisions = {
-    start: +newDoc._rev.split('-')[0],
-    ids: [
-      newDoc._rev.split('-')[1],
-      prevRev.split('-')[1]
-    ]
-  };
-  db.put(newDoc, {new_edits: false}, log);
-}
+    function getAll(){
+      db.allDocs({include_docs: true}, function(err, results){
+      });
+    }
 
-function log(err, ok){
-  console.log(err, ok);
-}
-</script>
-</html>
+
+    function get(){
+      db.get('foo', {rev_tree: true}, function(err, results){
+        console.log(results);
+      });
+    }
+
+    function visualize(){
+      db.visualizeRevTree('foo', function(err, svg){
+        svg.style.height = '700px';
+        svg.style.border = '2px solid';
+        document.body.appendChild(svg);
+      });
+    }
+
+    function init(){
+      cdb = db;
+      db.put({_id: "foo", "foo": 1}, function(){});
+    }
+
+    function put(val){
+      db.get("foo", function(err, doc){
+        doc.foo = val;
+        db.put(doc, function(err, res){
+          console.log(res);
+        });
+      });
+    }
+
+    function putAfter(doc, prevRev){
+      var newDoc = JSON.parse(JSON.stringify(doc));
+      newDoc._revisions = {
+        start: +newDoc._rev.split('-')[0],
+        ids: [
+        newDoc._rev.split('-')[1],
+        prevRev.split('-')[1]
+        ]
+      };
+      db.put(newDoc, {new_edits: false}, log);
+    }
+
+    function log(err, ok){
+      console.log(err, ok);
+    }
+
+    function des(){
+      Pouch.destroy(local1name);
+      }</script>
+  </html>
