@@ -1,42 +1,40 @@
 <html>
- <script>
+  <script>
+    var STORE = "store";
+
+    var req = indexedDB.open("test" + Math.random(), 1);
 
 
-  var STORE = "store";
-
-  var req = indexedDB.open("test" + Math.random(), 1);
-
-
-  req.onupgradeneeded = function(e) {
-    var db = e.target.result;
-    db.createObjectStore(STORE, {autoIncrement : true})
+    req.onupgradeneeded = function(e) {
+      var db = e.target.result;
+      db.createObjectStore(STORE, {autoIncrement : true})
       .createIndex('_rev', '_rev', {unique: true});
-  };
-
-  req.onsuccess = function(e) {
-    var db = e.target.result;
-    var txn = db.transaction([STORE], "readwrite");
-
-
-    var count = 0;
-    var doc = {_rev: "aaa"};
-    var req = txn.objectStore(STORE).put(doc);
-    req.onsuccess = function() {
-      try{
-        var req = txn.objectStore(STORE).put(doc);
-        req.onsuccess = function() {
-          console.log("success");
-        };
-        req.onerror = function() {
-          console.log("error");
-        };
-      } catch(e) {
-        console.log("OK: exception reported");
-        return;
-      }
-      console.log("ERROR: no exception reported");
     };
-  };
+
+    req.onsuccess = function(e) {
+      var db = e.target.result;
+      var txn = db.transaction([STORE], "readwrite");
+
+
+      var count = 0;
+      var doc = {_rev: "aaa"};
+      var req = txn.objectStore(STORE).put(doc);
+      req.onsuccess = function() {
+        try {
+          var req = txn.objectStore(STORE).put(doc);
+          req.onsuccess = function() {
+            console.log("success");
+          };
+          req.onerror = function(e) {
+            console.log("error", e.target.error);
+          };
+        } catch(e) {
+          console.log("OK: exception reported");
+          return;
+        }
+        console.log("ERROR: no exception reported");
+      };
+    };
 
 
 
